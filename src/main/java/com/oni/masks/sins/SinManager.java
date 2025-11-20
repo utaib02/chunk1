@@ -28,39 +28,28 @@ public class SinManager {
     
     public void assignSin(final Player player, final SinType sinType) {
         final PlayerData playerData = this.playerDataManager.getPlayerData(player.getUniqueId());
-        
-        // Remove current mask/sin effects if any
-        if (playerData.getCurrentMask() != null) {
-            playerData.getCurrentMask().removePassiveEffects();
-        }
+
         if (playerData.getCurrentSin() != null) {
             playerData.getCurrentSin().removePassiveEffects();
         }
-        
-        // Create and assign new sin
+
         final Sin newSin = this.createSin(player, sinType);
         playerData.setCurrentSin(newSin);
         playerData.setSinType(sinType);
-        
-        // Set max health based on sin
-        final double maxHealth = sinType.getHearts() * 2.0; // Convert hearts to health points
+
+        final double maxHealth = sinType.getHearts() * 2.0;
         if (player.getAttribute(Attribute.GENERIC_MAX_HEALTH) != null) {
             player.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(maxHealth);
             player.setHealth(Math.min(player.getHealth(), maxHealth));
         }
-        
-        // Apply passive effects
+
         newSin.applyPassiveEffects();
         newSin.onEquip();
-        
-        // Send announcement message
-        final Component message = sinType.getAnnouncementMessage();
-        player.sendMessage(message);
-        
-        // Play sound effect
+
+        player.sendMessage(Component.text("Sin Item attached! Use /ability3 to activate it.", NamedTextColor.GOLD));
+
         this.plugin.getSoundManager().playMaskAssignSound(player);
-        
-        // Save player data
+
         this.playerDataManager.savePlayerData(player.getUniqueId());
     }
     

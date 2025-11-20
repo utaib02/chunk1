@@ -23,6 +23,7 @@ public class PlayerData {
     private boolean hasJoinedBefore;
     private Set<UUID> trustedPlayers;
     private Map<String, Long> abilityCooldowns;
+    private Map<String, Long> abilityTriangleDelays;
     private int currentEventStage;
     private int eventStageXP;
     private int playerKills;
@@ -45,6 +46,7 @@ public class PlayerData {
         this.lastRerollTime = 0;
         this.uniqueKills = new HashSet<>();
         this.tierLevel = 0;
+        this.abilityTriangleDelays = new HashMap<>();
     }
     
     public boolean isTrusted(final UUID otherPlayerId) {
@@ -60,8 +62,15 @@ public class PlayerData {
     }
     
     public boolean isAbilityOnCooldown(final String abilityName) {
+        final long currentTime = System.currentTimeMillis();
+
         final Long cooldownEnd = this.abilityCooldowns.get(abilityName);
-        return cooldownEnd != null && System.currentTimeMillis() < cooldownEnd;
+        if (cooldownEnd != null && currentTime < cooldownEnd) {
+            return true;
+        }
+
+        final Long triangleDelayEnd = this.abilityTriangleDelays.get(abilityName);
+        return triangleDelayEnd != null && currentTime < triangleDelayEnd;
     }
     
     public void setCooldown(final String abilityName, final long durationMs) {
@@ -69,11 +78,15 @@ public class PlayerData {
     }
     
     public long getRemainingCooldown(final String abilityName) {
+        final long currentTime = System.currentTimeMillis();
+
         final Long cooldownEnd = this.abilityCooldowns.get(abilityName);
-        if (cooldownEnd == null) {
-            return 0;
-        }
-        return Math.max(0, cooldownEnd - System.currentTimeMillis());
+        final Long triangleDelayEnd = this.abilityTriangleDelays.get(abilityName);
+
+        long regularRemaining = cooldownEnd != null ? Math.max(0, cooldownEnd - currentTime) : 0;
+        long triangleRemaining = triangleDelayEnd != null ? Math.max(0, triangleDelayEnd - currentTime) : 0;
+
+        return Math.max(regularRemaining, triangleRemaining);
     }
     
     public void incrementEventStageXP() {
@@ -111,5 +124,31 @@ public class PlayerData {
     
     public int getUniqueKillCount() {
         return this.uniqueKills.size();
+    }
+
+    public void applyTriangleCooldowns(final String usedAbility) {
+        final long delayMs = 5000;
+        final long currentTime = System.currentTimeMillis();
+
+        if (!usedAbility.equals("ability1")) {
+            final Long existingDelay = this.abilityTriangleDelays.get("ability1");
+            if (existingDelay == null || existingDelay < currentTime) {
+                this.abilityTriangleDelays.put("ability1", currentTime + delayMs);
+            }
+        }
+
+        if (!usedAbility.equals("ability2")) {
+            final Long existingDelay = this.abilityTriangleDelays.get("ability2");
+            if (existingDelay == null || existingDelay < currentTime) {
+                this.abilityTriangleDelays.put("ability2", currentTime + delayMs);
+            }
+        }
+
+        if (!usedAbility.equals("ability3")) {
+            final Long existingDelay = this.abilityTriangleDelays.get("ability3");
+            if (existingDelay == null || existingDelay < currentTime) {
+                this.abilityTriangleDelays.put("ability3", currentTime + delayMs);
+            }
+        }
     }
 }

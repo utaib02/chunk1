@@ -39,26 +39,17 @@ public class ActionBarManager {
         final Mask mask = playerData.getCurrentMask();
         final Sin sin = playerData.getCurrentSin();
 
-        if (mask == null && sin == null) {
+        if (mask == null) {
             return;
         }
 
-        // Prioritize sin display over mask display
-        if (sin != null) {
-            final Component sinActionBar = this.buildSinActionBarMessage(player, sin, playerData);
-            player.sendActionBar(sinActionBar);
-            return;
-        }
-
-        // Check if player has an event mask
         if (playerData.getMaskType().isEventMask()) {
             final Component eventActionBar = this.buildEventActionBarMessage(player, playerData);
             player.sendActionBar(eventActionBar);
             return;
         }
 
-        // Default mask visuals (classic version)
-        final Component actionBarMessage = this.buildActionBarMessage(player, mask, playerData);
+        final Component actionBarMessage = this.buildActionBarMessage(player, mask, playerData, sin);
         player.sendActionBar(actionBarMessage);
     }
 
@@ -102,40 +93,38 @@ public class ActionBarManager {
         return message;
     }
 
-    private Component buildActionBarMessage(final Player player, final Mask mask, final PlayerData playerData) {
+    private Component buildActionBarMessage(final Player player, final Mask mask, final PlayerData playerData, final Sin sin) {
         Component message = Component.empty();
 
-        // Left: Mask icon + name
         final MaskType maskType = mask.getMaskType();
         message = message.append(Component.text(maskType.getActionBarIcon() + " ", maskType.getColor()))
                 .append(Component.text(maskType.getDisplayName(), maskType.getColor()))
                 .append(Component.text(" │ ", NamedTextColor.DARK_GRAY));
 
-        // Add ability status (classic style visuals)
         final var abilities = mask.getAbilities();
-        for (int i = 0; i < abilities.size(); i++) {
-            if (i > 0) {
-                message = message.append(Component.text(" || ", NamedTextColor.DARK_GRAY)); // original separator
-            }
 
-            final var ability = abilities.get(i);
-            final String abilityName = ability.getName();
-            final long remainingCooldown = playerData.getRemainingCooldown(ability.getName());
-
-            if (remainingCooldown > 0) {
-                final double remainingSeconds = remainingCooldown / 1000.0;
-                final String cooldownBar = this.createCooldownBar(remainingSeconds, ability.getDefaultCooldownSeconds());
-                message = message.append(Component.text(abilityName + " ", NamedTextColor.GRAY))
-                        .append(Component.text(cooldownBar + " ", NamedTextColor.YELLOW))
-                        .append(Component.text(String.format("%.1fs", remainingSeconds), NamedTextColor.YELLOW));
-            } else {
-                message = message.append(Component.text(abilityName + " ", NamedTextColor.GRAY))
-                        .append(Component.text("● ", NamedTextColor.GREEN))
-                        .append(Component.text("READY", NamedTextColor.GREEN));
-            }
+        final long ability1Cooldown = playerData.getRemainingCooldown("ability1");
+        if (ability1Cooldown > 0) {
+            final double remainingSeconds = ability1Cooldown / 1000.0;
+            message = message.append(Component.text("Ability1 ", NamedTextColor.GRAY))
+                    .append(Component.text(String.format("%.1fs", remainingSeconds), NamedTextColor.YELLOW));
+        } else {
+            message = message.append(Component.text("Ability1 ● READY", NamedTextColor.GREEN));
         }
 
-        // Right: Upgrade level indicator
+        message = message.append(Component.text(" │ ", NamedTextColor.DARK_GRAY));
+
+        final long ability2Cooldown = playerData.getRemainingCooldown("ability2");
+        if (ability2Cooldown > 0) {
+            final double remainingSeconds = ability2Cooldown / 1000.0;
+            final String cooldownBar = this.createCooldownBar(remainingSeconds, 60);
+            message = message.append(Component.text("Ability2 ", NamedTextColor.GRAY))
+                    .append(Component.text(cooldownBar + " ", NamedTextColor.YELLOW))
+                    .append(Component.text(String.format("%.1fs", remainingSeconds), NamedTextColor.YELLOW));
+        } else {
+            message = message.append(Component.text("Ability2 ● READY", NamedTextColor.GREEN));
+        }
+
         final int tier = playerData.getTierLevel();
         message = message.append(Component.text(" │ ", NamedTextColor.DARK_GRAY));
 
@@ -144,6 +133,22 @@ public class ActionBarManager {
                 message = message.append(Component.text("★", NamedTextColor.GOLD));
             } else {
                 message = message.append(Component.text("☆", NamedTextColor.GRAY));
+            }
+        }
+
+        if (sin != null) {
+            final SinType sinType = sin.getSinType();
+            final long ability3Cooldown = playerData.getRemainingCooldown("ability3");
+
+            message = message.append(Component.text(" │ ", NamedTextColor.DARK_GRAY));
+
+            if (ability3Cooldown > 0) {
+                final double remainingSeconds = ability3Cooldown / 1000.0;
+                message = message.append(Component.text(sinType.getDisplayName() + " ", sinType.getColor()))
+                        .append(Component.text(String.format("%.0fs", remainingSeconds), NamedTextColor.YELLOW));
+            } else {
+                message = message.append(Component.text(sinType.getDisplayName() + " ", sinType.getColor()))
+                        .append(Component.text("READY", NamedTextColor.GREEN));
             }
         }
 
