@@ -3,6 +3,8 @@ package com.oni.masks.commands;
 import com.oni.masks.OniMasksPlugin;
 import com.oni.masks.sins.SinManager;
 import com.oni.masks.sins.SinType;
+import com.oni.masks.shards.ShardManager;
+import com.oni.masks.shards.SinShardType;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.command.Command;
@@ -20,6 +22,7 @@ public class SosCommand implements CommandExecutor, TabCompleter {
     
     private final OniMasksPlugin plugin = OniMasksPlugin.getInstance();
     private final SinManager sinManager = this.plugin.getSinManager();
+    private final ShardManager shardManager = this.plugin.getShardManager();
     
     @Override
     public boolean onCommand(@NotNull final CommandSender sender, @NotNull final Command command, 
@@ -40,6 +43,7 @@ public class SosCommand implements CommandExecutor, TabCompleter {
         return switch (subCommand) {
             case "give" -> this.handleGive(sender, args);
             case "remove" -> this.handleRemove(sender, args);
+            case "shard" -> this.handleShard(sender, args);
             default -> {
                 this.sendUsage(sender);
                 yield true;
@@ -82,19 +86,43 @@ public class SosCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(Component.text("Usage: /sos remove <player>", NamedTextColor.RED));
             return true;
         }
-        
+
         final Player targetPlayer = this.plugin.getServer().getPlayer(args[1]);
         if (targetPlayer == null) {
             sender.sendMessage(Component.text("Player not found!", NamedTextColor.RED));
             return true;
         }
-        
-        // Remove the sin
+
         this.sinManager.removeSin(targetPlayer);
-        
-        // Send confirmation message
         sender.sendMessage(Component.text("[Admin] You have lifted the sin from " + targetPlayer.getName(), NamedTextColor.GREEN));
-        
+
+        return true;
+    }
+
+    private boolean handleShard(final CommandSender sender, final String[] args) {
+        if (args.length < 3) {
+            sender.sendMessage(Component.text("Usage: /sos shard <player> <shard>", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Available shards: pride, wrath, envy, greed, lust, gluttony, sloth", NamedTextColor.GRAY));
+            return true;
+        }
+
+        final Player targetPlayer = this.plugin.getServer().getPlayer(args[1]);
+        if (targetPlayer == null) {
+            sender.sendMessage(Component.text("Player not found!", NamedTextColor.RED));
+            return true;
+        }
+
+        final String shardName = args[2].toLowerCase();
+        final SinShardType shardType = this.parseShardType(shardName);
+
+        if (shardType == null) {
+            sender.sendMessage(Component.text("Invalid shard type! Available: pride, wrath, envy, greed, lust, gluttony, sloth", NamedTextColor.RED));
+            return true;
+        }
+
+        this.shardManager.assignShard(targetPlayer, shardType);
+        sender.sendMessage(Component.text("[Admin] You have given " + targetPlayer.getName() + " the " + shardType.getDisplayName() + " Shard", NamedTextColor.GREEN));
+
         return true;
     }
     
@@ -110,12 +138,26 @@ public class SosCommand implements CommandExecutor, TabCompleter {
             default -> null;
         };
     }
+
+    private SinShardType parseShardType(final String shardName) {
+        return switch (shardName) {
+            case "pride" -> SinShardType.PRIDE;
+            case "wrath" -> SinShardType.WRATH;
+            case "envy" -> SinShardType.ENVY;
+            case "greed" -> SinShardType.GREED;
+            case "lust" -> SinShardType.LUST;
+            case "gluttony" -> SinShardType.GLUTTONY;
+            case "sloth" -> SinShardType.SLOTH;
+            default -> null;
+        };
+    }
     
     private void sendUsage(final CommandSender sender) {
         sender.sendMessage(Component.text("Season of Sins Commands:", NamedTextColor.GOLD));
         sender.sendMessage(Component.text("/sos give <player> <sin> - Curse a player with a sin", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("/sos remove <player> - Remove a sin from a player", NamedTextColor.YELLOW));
-        sender.sendMessage(Component.text("Available sins: pride, wrath, envy, greed, lust, gluttony, sloth", NamedTextColor.GRAY));
+        sender.sendMessage(Component.text("/sos shard <player> <shard> - Give a shard to a player", NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("Available: pride, wrath, envy, greed, lust, gluttony, sloth", NamedTextColor.GRAY));
     }
     
     @Override
@@ -127,11 +169,12 @@ public class SosCommand implements CommandExecutor, TabCompleter {
         if (args.length == 1) {
             completions.add("give");
             completions.add("remove");
+            completions.add("shard");
         } else if (args.length == 2) {
             return this.plugin.getServer().getOnlinePlayers().stream()
                     .map(Player::getName)
                     .toList();
-        } else if (args.length == 3 && args[0].equalsIgnoreCase("give")) {
+        } else if (args.length == 3 && (args[0].equalsIgnoreCase("give") || args[0].equalsIgnoreCase("shard"))) {
             completions.add("pride");
             completions.add("wrath");
             completions.add("envy");

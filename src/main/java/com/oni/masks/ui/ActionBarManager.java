@@ -97,9 +97,17 @@ public class ActionBarManager {
         Component message = Component.empty();
 
         final MaskType maskType = mask.getMaskType();
-        message = message.append(Component.text(maskType.getActionBarIcon() + " ", maskType.getColor()))
-                .append(Component.text(maskType.getDisplayName(), maskType.getColor()))
-                .append(Component.text(" │ ", NamedTextColor.DARK_GRAY));
+        message = message.append(Component.text(maskType.getActionBarIcon() + " ", maskType.getColor()));
+
+        if (playerData.getCurrentShard() != null) {
+            final var shardType = playerData.getShardType();
+            message = message.append(Component.text(shardType.getDisplayName() + " ", shardType.getColor()))
+                    .append(Component.text(maskType.getDisplayName(), maskType.getColor()));
+        } else {
+            message = message.append(Component.text(maskType.getDisplayName(), maskType.getColor()));
+        }
+
+        message = message.append(Component.text(" │ ", NamedTextColor.DARK_GRAY));
 
         final var abilities = mask.getAbilities();
 

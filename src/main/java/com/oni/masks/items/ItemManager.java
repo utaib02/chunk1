@@ -2,6 +2,7 @@
 package com.oni.masks.items;
 
 import com.oni.masks.OniMasksPlugin;
+import com.oni.masks.shards.SinShardType;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -22,6 +23,8 @@ public class ItemManager {
 
     private final OniMasksPlugin plugin = OniMasksPlugin.getInstance();
     private final NamespacedKey rerollItemKey = new NamespacedKey(this.plugin, "reroll_item");
+    private final NamespacedKey shardItemKey = new NamespacedKey(this.plugin, "shard_item");
+    private final NamespacedKey shardTypeKey = new NamespacedKey(this.plugin, "shard_type");
 
     public ItemManager() {
         this.registerRecipes();
@@ -89,5 +92,56 @@ public boolean isEventMask(final ItemStack item) {
 
         final String name = LegacyComponentSerializer.legacySection().serialize(meta.displayName());
         return name.contains("Forbidden Shadows") || name.contains("Primordial Flame");
+    }
+
+    public ItemStack createShardItem(final SinShardType shardType) {
+        final ItemStack item = new ItemStack(Material.AMETHYST_SHARD);
+        final ItemMeta meta = item.getItemMeta();
+
+        meta.displayName(Component.text(shardType.getDisplayName() + " Shard", shardType.getColor())
+                .decoration(TextDecoration.ITALIC, false));
+
+        meta.lore(List.of(
+                Component.text("A shard of " + shardType.getDisplayName(), shardType.getColor())
+                        .decoration(TextDecoration.ITALIC, false),
+                Component.text("Ability1: " + shardType.getAbility1Buff(), NamedTextColor.GRAY)
+                        .decoration(TextDecoration.ITALIC, false),
+                Component.text("Ability2: " + shardType.getAbility2Buff(), NamedTextColor.GRAY)
+                        .decoration(TextDecoration.ITALIC, false),
+                Component.empty(),
+                Component.text("Right-click your mask to apply", NamedTextColor.YELLOW)
+                        .decoration(TextDecoration.ITALIC, false)
+        ));
+
+        meta.addEnchant(Enchantment.UNBREAKING, 1, true);
+        meta.getPersistentDataContainer().set(this.shardItemKey, PersistentDataType.BOOLEAN, true);
+        meta.getPersistentDataContainer().set(this.shardTypeKey, PersistentDataType.STRING, shardType.name());
+
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    public boolean isShardItem(final ItemStack item) {
+        if (item == null || !item.hasItemMeta()) {
+            return false;
         }
+
+        return item.getItemMeta().getPersistentDataContainer()
+                .has(this.shardItemKey, PersistentDataType.BOOLEAN);
+    }
+
+    public SinShardType getShardType(final ItemStack item) {
+        if (item == null || !item.hasItemMeta() || !this.isShardItem(item)) {
+            return null;
+        }
+
+        final String shardName = item.getItemMeta().getPersistentDataContainer()
+                .get(this.shardTypeKey, PersistentDataType.STRING);
+
+        try {
+            return SinShardType.valueOf(shardName);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
 } 

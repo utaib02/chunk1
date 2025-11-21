@@ -8,6 +8,7 @@ import com.oni.masks.commands.RerollCommand;
 import com.oni.masks.commands.SosCommand;
 import com.oni.masks.commands.TrustCommand;
 import com.oni.masks.commands.AbilityCommand;
+import com.oni.masks.shards.ShardManager;
 import com.oni.masks.config.ConfigManager;
 import com.oni.masks.effects.ParticleManager;
 import com.oni.masks.effects.SoundManager;
@@ -39,6 +40,7 @@ public final class OniMasksPlugin extends JavaPlugin {
     private EventManager eventManager;
     private DeveloperCommand developerCommand;
     private SinManager sinManager;
+    private ShardManager shardManager;
 
     @Override
     public void onEnable() {
@@ -56,8 +58,9 @@ public final class OniMasksPlugin extends JavaPlugin {
         this.itemManager = new ItemManager();
         this.eventManager = new EventManager();
         this.actionBarManager = new ActionBarManager();
-        this.developerCommand = new DeveloperCommand(this); 
+        this.developerCommand = new DeveloperCommand(this);
         this.sinManager = new SinManager();
+        this.shardManager = new ShardManager();
         
         // Register events
         this.registerEvents();
@@ -165,5 +168,9 @@ public final class OniMasksPlugin extends JavaPlugin {
     
     public SinManager getSinManager() {
         return this.sinManager;
+    }
+
+    public ShardManager getShardManager() {
+        return this.shardManager;
     }
 }

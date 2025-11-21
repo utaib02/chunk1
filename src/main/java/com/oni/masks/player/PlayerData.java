@@ -4,6 +4,8 @@ import com.oni.masks.masks.Mask;
 import com.oni.masks.masks.MaskType;
 import com.oni.masks.sins.Sin;
 import com.oni.masks.sins.SinType;
+import com.oni.masks.shards.Shard;
+import com.oni.masks.shards.SinShardType;
 import lombok.Data;
 
 import java.util.HashMap;
@@ -19,7 +21,9 @@ public class PlayerData {
     private MaskType maskType;
     private transient Mask currentMask; // Don't serialize the actual mask object
     private SinType sinType;
-    private transient Sin currentSin; // Don't serialize the actual sin object
+    private transient Sin currentSin;
+    private SinShardType shardType;
+    private transient Shard currentShard;
     private boolean hasJoinedBefore;
     private Set<UUID> trustedPlayers;
     private Map<String, Long> abilityCooldowns;
@@ -47,6 +51,8 @@ public class PlayerData {
         this.uniqueKills = new HashSet<>();
         this.tierLevel = 0;
         this.abilityTriangleDelays = new HashMap<>();
+        this.shardType = null;
+        this.currentShard = null;
     }
     
     public boolean isTrusted(final UUID otherPlayerId) {

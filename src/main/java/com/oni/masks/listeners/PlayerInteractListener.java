@@ -25,13 +25,17 @@ public class PlayerInteractListener implements Listener {
     @EventHandler
     public void onPlayerInteract(final PlayerInteractEvent event) {
         final Player player = event.getPlayer();
-
         final Action action = event.getAction();
         final ItemStack item = event.getItem();
 
-        // Handle reroll item usage
         if (item != null && this.plugin.getItemManager().isRerollItem(item)) {
             this.handleRerollItem(player, item, action);
+            event.setCancelled(true);
+            return;
+        }
+
+        if (item != null && this.plugin.getItemManager().isShardItem(item)) {
+            this.handleShardItem(player, item, action);
             event.setCancelled(true);
             return;
         }
@@ -91,6 +95,33 @@ public class PlayerInteractListener implements Listener {
                     player.sendMessage(Component.text("§aReroll available again!", NamedTextColor.GREEN));
                 }
             }
-        }.runTaskLater(this.plugin, 400L); // 20 seconds
+        }.runTaskLater(this.plugin, 400L);
+    }
+
+    private void handleShardItem(final Player player, final ItemStack item, final Action action) {
+        if (action != Action.RIGHT_CLICK_AIR && action != Action.RIGHT_CLICK_BLOCK) {
+            return;
+        }
+
+        final PlayerData playerData = this.playerDataManager.getPlayerData(player.getUniqueId());
+        final var shardType = this.plugin.getItemManager().getShardType(item);
+
+        if (shardType == null) {
+            player.sendMessage(Component.text("Invalid shard!", NamedTextColor.RED));
+            return;
+        }
+
+        this.plugin.getShardManager().assignShard(player, shardType);
+
+        if (item.getAmount() > 1) {
+            item.setAmount(item.getAmount() - 1);
+        } else {
+            player.getInventory().remove(item);
+        }
+
+        player.getWorld().spawnParticle(org.bukkit.Particle.ELECTRIC_SPARK,
+                player.getLocation().add(0, 1, 0), 20, 0.5, 0.5, 0.5, 0.1);
+
+        this.playerDataManager.savePlayerData(player.getUniqueId());
     }
 }

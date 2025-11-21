@@ -16,16 +16,16 @@ public class CraftingListener implements Listener {
         if (!(event.getWhoClicked() instanceof Player)) {
             return;
         }
-        
+
         final Player player = (Player) event.getWhoClicked();
         final ItemStack result = event.getRecipe().getResult();
-        
-        // Check if crafting reroll item
+
         if (this.plugin.getItemManager().isRerollItem(result)) {
-            // Log reroll item crafting
             this.plugin.getLogger().info(event.getWhoClicked().getName() + " crafted a Mask Reroll Token");
         }
-        
-        // Event masks are no longer craftable - all crafting recipes removed
+
+        if (this.plugin.getItemManager().isShardItem(result)) {
+            this.plugin.getLogger().info(player.getName() + " crafted a Sin Shard");
+        }
     }
 }
